@@ -31,7 +31,14 @@ export default function BeritaFormPage({ params }: { params: { id?: string } }) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    }
+
+    setForm((prev) => {
+      const newForm = { ...prev, [name]: val };
+      if (name === "judul" && isNew) {
+        newForm.slug = slugify(value);
+      }
+      return newForm;
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
