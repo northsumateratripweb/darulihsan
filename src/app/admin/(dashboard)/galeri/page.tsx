@@ -9,6 +9,7 @@ export default function AdminGaleriPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ judul: "", url: "", kategori: "UMUM" });
 
   const load = async () => {
@@ -20,6 +21,30 @@ export default function AdminGaleriPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `galeri/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Gagal upload: " + uploadError.message);
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setForm((prev) => ({ ...prev, url: publicUrl }));
+      toast.success("Foto berhasil diunggah!");
+    }
+    setUploading(false);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,10 +118,16 @@ export default function AdminGaleriPage() {
             <h3 className="text-xl font-extrabold text-[#0A2540] mb-6">Tambah Foto Galeri</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">URL Gambar *</label>
-                <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder="https://..." required />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Foto Galeri *</label>
+                <div className="flex gap-2">
+                  <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="https://..." required />
+                  <label className="w-12 h-[46px] bg-slate-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-200 shrink-0">
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                    <ImageIcon className={`w-5 h-5 text-slate-500 ${uploading ? 'animate-pulse' : ''}`} />
+                  </label>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Judul (Opsional)</label>

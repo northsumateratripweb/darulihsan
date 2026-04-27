@@ -9,6 +9,7 @@ export default function AdminStrukturPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ nama: "", jabatan: "", kategori: "GURU", foto: "", nip: "", urutan: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -21,6 +22,30 @@ export default function AdminStrukturPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `struktur/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Gagal upload: " + uploadError.message);
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setForm((prev) => ({ ...prev, foto: publicUrl }));
+      toast.success("Foto berhasil diunggah!");
+    }
+    setUploading(false);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,10 +194,16 @@ export default function AdminStrukturPage() {
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Foto URL</label>
-                  <input value={form.foto} onChange={(e) => setForm({ ...form, foto: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    placeholder="https://..." />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Foto Anggota</label>
+                  <div className="flex gap-2">
+                    <input value={form.foto} onChange={(e) => setForm({ ...form, foto: e.target.value })}
+                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder="URL Gambar atau Upload ->" />
+                    <label className="w-12 h-[46px] bg-slate-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-200 shrink-0">
+                      <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                      <User className={`w-5 h-5 text-slate-500 ${uploading ? 'animate-pulse' : ''}`} />
+                    </label>
+                  </div>
                 </div>
               </div>
               <button type="submit" disabled={saving}

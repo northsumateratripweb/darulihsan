@@ -317,56 +317,122 @@ CREATE TABLE IF NOT EXISTS kontak_pesan (
 -- RLS Policies (Row Level Security)
 -- ============================================================
 
--- Enable RLS on sensitive tables
+-- ============================================================
+-- RLS Policies (Row Level Security) - FORCE CLEAN VERSION
+-- ============================================================
+
+-- 1. Enable RLS on ALL tables
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE berita ENABLE ROW LEVEL SECURITY;
+ALTER TABLE program ENABLE ROW LEVEL SECURITY;
+ALTER TABLE galeri ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pengumuman ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prestasi ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ekskul ENABLE ROW LEVEL SECURITY;
+ALTER TABLE struktur_organisasi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pendaftar ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kontak_pesan ENABLE ROW LEVEL SECURITY;
-
--- Public can read published content
-ALTER TABLE berita ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read published berita" ON berita FOR SELECT USING (published = true);
-CREATE POLICY "Authenticated can manage berita" ON berita FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE galeri ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read galeri" ON galeri FOR SELECT USING (true);
-CREATE POLICY "Authenticated can manage galeri" ON galeri FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE program ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read active programs" ON program FOR SELECT USING (aktif = true);
-CREATE POLICY "Authenticated can manage program" ON program FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE pengumuman ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read active pengumuman" ON pengumuman FOR SELECT USING (aktif = true);
-CREATE POLICY "Authenticated can manage pengumuman" ON pengumuman FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE prestasi ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read prestasi" ON prestasi FOR SELECT USING (true);
-CREATE POLICY "Authenticated can manage prestasi" ON prestasi FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE ekskul ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read active ekskul" ON ekskul FOR SELECT USING (aktif = true);
-CREATE POLICY "Authenticated can manage ekskul" ON ekskul FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE struktur_organisasi ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read struktur" ON struktur_organisasi FOR SELECT USING (aktif = true);
-CREATE POLICY "Authenticated can manage struktur" ON struktur_organisasi FOR ALL USING (auth.role() = 'authenticated');
-
-ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read settings" ON site_settings FOR SELECT USING (true);
-CREATE POLICY "Authenticated can manage settings" ON site_settings FOR ALL USING (auth.role() = 'authenticated');
-
 ALTER TABLE ppdb_info ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read ppdb_info" ON ppdb_info FOR SELECT USING (true);
-CREATE POLICY "Authenticated can manage ppdb_info" ON ppdb_info FOR ALL USING (auth.role() = 'authenticated');
 
--- Pendaftar: public can insert, authenticated can view all
-CREATE POLICY "Public can insert pendaftar" ON pendaftar FOR INSERT WITH CHECK (true);
-CREATE POLICY "Authenticated can read pendaftar" ON pendaftar FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated can update pendaftar" ON pendaftar FOR UPDATE USING (auth.role() = 'authenticated');
+-- 2. SITE SETTINGS & PPDB INFO
+DROP POLICY IF EXISTS "Public can read site settings" ON site_settings;
+DROP POLICY IF EXISTS "Public read site settings" ON site_settings;
+DROP POLICY IF EXISTS "Public can read settings" ON site_settings;
+CREATE POLICY "Public read site settings" ON site_settings FOR SELECT USING (true);
 
--- Contact: public can insert, authenticated can view
-CREATE POLICY "Public can send kontak" ON kontak_pesan FOR INSERT WITH CHECK (true);
-CREATE POLICY "Authenticated can read kontak" ON kontak_pesan FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated can update kontak" ON kontak_pesan FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admin manage site settings" ON site_settings;
+DROP POLICY IF EXISTS "Admin can manage site settings" ON site_settings;
+DROP POLICY IF EXISTS "Authenticated can manage settings" ON site_settings;
+CREATE POLICY "Admin manage site settings" ON site_settings FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read ppdb_info" ON ppdb_info;
+DROP POLICY IF EXISTS "Public can read ppdb_info" ON ppdb_info;
+CREATE POLICY "Public read ppdb_info" ON ppdb_info FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admin manage ppdb_info" ON ppdb_info;
+DROP POLICY IF EXISTS "Authenticated can manage ppdb_info" ON ppdb_info;
+CREATE POLICY "Admin manage ppdb_info" ON ppdb_info FOR ALL USING (auth.role() = 'authenticated');
+
+-- 3. BERITA
+DROP POLICY IF EXISTS "Public read published berita" ON berita;
+DROP POLICY IF EXISTS "Public can read published berita" ON berita;
+CREATE POLICY "Public read published berita" ON berita FOR SELECT USING (published = true);
+
+DROP POLICY IF EXISTS "Admin manage berita" ON berita;
+DROP POLICY IF EXISTS "Admin can manage berita" ON berita;
+DROP POLICY IF EXISTS "Authenticated can manage berita" ON berita;
+CREATE POLICY "Admin manage berita" ON berita FOR ALL USING (auth.role() = 'authenticated');
+
+-- 4. PROGRAM, GALERI, PRESTASI, EKSKUL, STRUKTUR
+DROP POLICY IF EXISTS "Public read program" ON program;
+DROP POLICY IF EXISTS "Public can read program" ON program;
+DROP POLICY IF EXISTS "Public can read active programs" ON program;
+CREATE POLICY "Public read program" ON program FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage program" ON program;
+DROP POLICY IF EXISTS "Authenticated can manage program" ON program;
+CREATE POLICY "Admin manage program" ON program FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read galeri" ON galeri;
+DROP POLICY IF EXISTS "Public can read galeri" ON galeri;
+CREATE POLICY "Public read galeri" ON galeri FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage galeri" ON galeri;
+DROP POLICY IF EXISTS "Authenticated can manage galeri" ON galeri;
+CREATE POLICY "Admin manage galeri" ON galeri FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read prestasi" ON prestasi;
+DROP POLICY IF EXISTS "Public can read prestasi" ON prestasi;
+CREATE POLICY "Public read prestasi" ON prestasi FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage prestasi" ON prestasi;
+DROP POLICY IF EXISTS "Authenticated can manage prestasi" ON prestasi;
+CREATE POLICY "Admin manage prestasi" ON prestasi FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read ekskul" ON ekskul;
+DROP POLICY IF EXISTS "Public can read ekskul" ON ekskul;
+DROP POLICY IF EXISTS "Public can read active ekskul" ON ekskul;
+CREATE POLICY "Public read ekskul" ON ekskul FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage ekskul" ON ekskul;
+DROP POLICY IF EXISTS "Authenticated can manage ekskul" ON ekskul;
+CREATE POLICY "Admin manage ekskul" ON ekskul FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read struktur" ON struktur_organisasi;
+DROP POLICY IF EXISTS "Public can read struktur" ON struktur_organisasi;
+CREATE POLICY "Public read struktur" ON struktur_organisasi FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage struktur" ON struktur_organisasi;
+DROP POLICY IF EXISTS "Authenticated can manage struktur" ON struktur_organisasi;
+CREATE POLICY "Admin manage struktur" ON struktur_organisasi FOR ALL USING (auth.role() = 'authenticated');
+
+-- 5. PENGUMUMAN
+DROP POLICY IF EXISTS "Public read active pengumuman" ON pengumuman;
+DROP POLICY IF EXISTS "Public can read pengumuman" ON pengumuman;
+DROP POLICY IF EXISTS "Public can read active pengumuman" ON pengumuman;
+CREATE POLICY "Public read active pengumuman" ON pengumuman FOR SELECT USING (aktif = true);
+DROP POLICY IF EXISTS "Admin manage pengumuman" ON pengumuman;
+DROP POLICY IF EXISTS "Authenticated can manage pengumuman" ON pengumuman;
+CREATE POLICY "Admin manage pengumuman" ON pengumuman FOR ALL USING (auth.role() = 'authenticated');
+
+-- 6. PPDB
+DROP POLICY IF EXISTS "Public submit ppdb" ON pendaftar;
+DROP POLICY IF EXISTS "Public can submit ppdb" ON pendaftar;
+DROP POLICY IF EXISTS "Public can insert pendaftar" ON pendaftar;
+CREATE POLICY "Public submit ppdb" ON pendaftar FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin manage ppdb" ON pendaftar;
+DROP POLICY IF EXISTS "Authenticated can read pendaftar" ON pendaftar;
+DROP POLICY IF EXISTS "Authenticated can update pendaftar" ON pendaftar;
+CREATE POLICY "Admin manage ppdb" ON pendaftar FOR ALL USING (auth.role() = 'authenticated');
+
+-- 7. KONTAK
+DROP POLICY IF EXISTS "Public submit kontak" ON kontak_pesan;
+DROP POLICY IF EXISTS "Public can submit kontak" ON kontak_pesan;
+DROP POLICY IF EXISTS "Public can send kontak" ON kontak_pesan;
+CREATE POLICY "Public submit kontak" ON kontak_pesan FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin manage kontak" ON kontak_pesan;
+DROP POLICY IF EXISTS "Authenticated can read kontak" ON kontak_pesan;
+DROP POLICY IF EXISTS "Authenticated can update kontak" ON kontak_pesan;
+CREATE POLICY "Admin manage kontak" ON kontak_pesan FOR ALL USING (auth.role() = 'authenticated');
+
+
 
 -- ============================================================
 -- Functions
@@ -381,9 +447,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_berita_updated_at ON berita;
 CREATE TRIGGER update_berita_updated_at BEFORE UPDATE ON berita FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_program_updated_at ON program;
 CREATE TRIGGER update_program_updated_at BEFORE UPDATE ON program FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_pendaftar_updated_at ON pendaftar;
 CREATE TRIGGER update_pendaftar_updated_at BEFORE UPDATE ON pendaftar FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_site_settings_updated_at ON site_settings;
 CREATE TRIGGER update_site_settings_updated_at BEFORE UPDATE ON site_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Generate nomor pendaftaran
@@ -400,9 +473,64 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS set_nomor_pendaftaran ON pendaftar;
 CREATE TRIGGER set_nomor_pendaftaran BEFORE INSERT ON pendaftar FOR EACH ROW EXECUTE FUNCTION generate_nomor_pendaftaran();
+
 
 -- ============================================================
 -- Storage Buckets (run in Supabase Dashboard)
 -- ============================================================
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('darulihsan', 'darulihsan', true);
+-- ============================================================
+-- 11. STORAGE BUCKET SETUP (Instruksi)
+-- ============================================================
+-- Jalankan ini di SQL Editor untuk memberikan izin akses storage
+-- Pastikan Anda sudah membuat bucket bernama 'uploads' di dashboard Storage Supabase
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('uploads', 'uploads', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'uploads');
+
+DROP POLICY IF EXISTS "Admin Upload" ON storage.objects;
+CREATE POLICY "Admin Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'uploads');
+
+DROP POLICY IF EXISTS "Admin Update" ON storage.objects;
+CREATE POLICY "Admin Update" ON storage.objects FOR UPDATE USING (bucket_id = 'uploads');
+
+DROP POLICY IF EXISTS "Admin Delete" ON storage.objects;
+CREATE POLICY "Admin Delete" ON storage.objects FOR DELETE USING (bucket_id = 'uploads');
+
+-- ============================================================
+-- 12. DUMMY DATA LENGKAP (Fixed Columns)
+-- ============================================================
+
+-- Program
+INSERT INTO program (nama, deskripsi, icon, fitur, aktif) VALUES
+('Program Tahfidz Al-Quran', 'Program unggulan untuk mencetak Hafidz 30 Juz dengan metode mutqin.', 'BookOpen', ARRAY['Setoran harian', 'Tasmi berkala', 'Karantina Tahfidz'], true),
+('Madrasah Aliyah Plus', 'Kurikulum nasional yang diperkaya dengan muatan lokal pesantren dan IT.', 'GraduationCap', ARRAY['Persiapan PTN', 'Kelas Digital', 'Bimbingan UTBK'], true),
+('Bahasa Asing Intensif', 'Penguasaan Bahasa Arab dan Inggris melalui lingkungan berbahasa aktif.', 'Languages', ARRAY['Arabic Day', 'English Competition', 'Native Speaker visit'], true)
+ON CONFLICT DO NOTHING;
+
+-- Prestasi
+INSERT INTO prestasi (nama_prestasi, tingkat, tahun, deskripsi, gambar) VALUES
+('Juara 1 Pidato Bahasa Arab Nasional', 'Nasional', 2024, 'Meraih medali emas dalam kompetisi POSPENAS tingkat Nasional.', 'https://images.unsplash.com/photo-1567057420215-39cb32e53005?w=800'),
+('Medali Perak Olimpiade Matematika', 'Provinsi', 2023, 'Kompetisi Sains Madrasah (KSM) tingkat Provinsi.', 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800')
+ON CONFLICT DO NOTHING;
+
+-- Ekskul
+INSERT INTO ekskul (nama, deskripsi, icon, jadwal) VALUES
+('Pramuka', 'Membentuk karakter disiplin dan mandiri.', 'Compass', 'Sabtu, 15:00'),
+('Panahan', 'Melatih fokus dan konsentrasi sesuai sunnah.', 'Target', 'Minggu, 08:00'),
+('Robotik', 'Inovasi teknologi masa depan.', 'Cpu', 'Kamis, 14:00'),
+('Seni Kaligrafi', 'Keindahan menulis ayat-ayat Al-Quran.', 'PenTool', 'Jumat, 14:00')
+ON CONFLICT DO NOTHING;
+
+-- Pengumuman
+INSERT INTO pengumuman (judul, isi, jenis, aktif) VALUES
+('Pendaftaran Santri Baru 2025/2026', 'Pendaftaran gelombang pertama telah dibuka hingga akhir Maret 2025.', 'success', true),
+('Libur Akhir Semester', 'Santri diperbolehkan pulang mulai tanggal 20 Desember 2024.', 'warning', false)
+ON CONFLICT DO NOTHING;
+

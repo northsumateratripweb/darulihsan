@@ -15,6 +15,7 @@ export default function BeritaFormPage({ params }: { params: { id?: string } }) 
   const isNew = !params?.id || params.id === "baru";
 
   const [loading, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     judul: "",
     slug: "",
@@ -30,11 +31,31 @@ export default function BeritaFormPage({ params }: { params: { id?: string } }) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    if (name === "judul") {
-      setForm((prev) => ({ ...prev, judul: value, slug: slugify(value) }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: val }));
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `berita/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Gagal upload: " + uploadError.message);
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setForm((prev) => ({ ...prev, gambar: publicUrl }));
+      toast.success("Foto berhasil diunggah!");
+    }
+    setUploading(false);
   };
 
   const handleSave = async (publish?: boolean) => {
@@ -132,9 +153,15 @@ export default function BeritaFormPage({ params }: { params: { id?: string } }) 
                 <Image className="w-8 h-8 text-slate-300" />
               </div>
             )}
-            <input name="gambar" value={form.gambar} onChange={handleChange}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-700"
-              placeholder="URL gambar (https://...)" />
+            <div className="flex gap-2">
+              <input name="gambar" value={form.gambar} onChange={handleChange}
+                className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-700"
+                placeholder="URL gambar (https://...)" />
+              <label className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-200 shrink-0">
+                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                <Image className={`w-5 h-5 text-slate-500 ${uploading ? 'animate-pulse' : ''}`} />
+              </label>
+            </div>
           </div>
 
           {/* Meta */}
