@@ -14,9 +14,9 @@ export const revalidate = 60;
 export default async function StrukturPage() {
   const struktur = await getStruktur();
 
-  const pimpinan = struktur.filter(s => s.kategori === "PIMPINAN");
-  const guru = struktur.filter(s => s.kategori === "GURU");
-  const staff = struktur.filter(s => s.kategori === "STAFF");
+  const pimpinan = struktur.filter(s => s.divisi?.toLowerCase() === "pimpinan");
+  const guru = struktur.filter(s => s.divisi?.toLowerCase() === "guru");
+  const staff = struktur.filter(s => s.divisi?.toLowerCase() === "staff" || s.divisi?.toLowerCase() === "administrasi");
 
   const MemberCard = ({ member }: { member: any }) => (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-300 text-center group">
@@ -36,7 +36,7 @@ export default async function StrukturPage() {
       </div>
       <h3 className="font-extrabold text-[#0A2540] text-lg mb-1">{member.nama}</h3>
       <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-3">{member.jabatan}</p>
-      {member.nip && <p className="text-slate-400 text-[10px] font-mono">NIP: {member.nip}</p>}
+      {member.kualifikasi && <p className="text-slate-400 text-[10px] font-mono">{member.kualifikasi}</p>}
     </div>
   );
 

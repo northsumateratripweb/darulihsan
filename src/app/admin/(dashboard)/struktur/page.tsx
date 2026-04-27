@@ -10,7 +10,7 @@ export default function AdminStrukturPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ nama: "", jabatan: "", kategori: "GURU", foto: "", nip: "", urutan: 0 });
+  const [form, setForm] = useState({ nama: "", jabatan: "", divisi: "Guru", foto: "", kualifikasi: "", urutan: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = async () => {
@@ -63,7 +63,7 @@ export default function AdminStrukturPage() {
       }
     } else {
       const { error } = await supabase.from("struktur_organisasi").insert([form]);
-      if (error) toast.error("Gagal menambah anggota");
+      if (error) toast.error("Gagal menambah anggota: " + error.message);
       else {
         toast.success("Anggota ditambahkan");
         closeModal();
@@ -76,11 +76,11 @@ export default function AdminStrukturPage() {
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setForm({ nama: "", jabatan: "", kategori: "GURU", foto: "", nip: "", urutan: 0 });
+    setForm({ nama: "", jabatan: "", divisi: "Guru", foto: "", kualifikasi: "", urutan: 0 });
   };
 
   const handleEdit = (member: any) => {
-    setForm({ ...member });
+    setForm({ ...member, kualifikasi: member.kualifikasi || "" });
     setEditingId(member.id);
     setShowModal(true);
   };
@@ -116,7 +116,7 @@ export default function AdminStrukturPage() {
             <tr className="bg-slate-50 text-left">
               <th className="px-6 py-3.5 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Anggota</th>
               <th className="px-6 py-3.5 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Jabatan</th>
-              <th className="px-6 py-3.5 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Kategori</th>
+              <th className="px-6 py-3.5 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Divisi</th>
               <th className="px-6 py-3.5 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Aksi</th>
             </tr>
           </thead>
@@ -130,13 +130,13 @@ export default function AdminStrukturPage() {
                     </div>
                     <div>
                       <p className="font-bold text-slate-800 text-sm">{m.nama}</p>
-                      <p className="text-xs text-slate-400 font-mono">{m.nip || "-"}</p>
+                      <p className="text-xs text-slate-400 font-mono">{m.kualifikasi || "-"}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-[#D4AF37]">{m.jabatan}</td>
                 <td className="px-6 py-4">
-                  <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full">{m.kategori}</span>
+                  <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">{m.divisi}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
@@ -175,17 +175,17 @@ export default function AdminStrukturPage() {
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">NIP (Opsional)</label>
-                  <input value={form.nip} onChange={(e) => setForm({ ...form, nip: e.target.value })}
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Kualifikasi/NIP</label>
+                  <input value={form.kualifikasi} onChange={(e) => setForm({ ...form, kualifikasi: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Kategori</label>
-                  <select value={form.kategori} onChange={(e) => setForm({ ...form, kategori: e.target.value })}
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Divisi</label>
+                  <select value={form.divisi} onChange={(e) => setForm({ ...form, divisi: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
-                    <option value="PIMPINAN">Pimpinan</option>
-                    <option value="GURU">Guru</option>
-                    <option value="STAFF">Staff</option>
+                    <option value="Pimpinan">Pimpinan</option>
+                    <option value="Guru">Guru</option>
+                    <option value="Staff">Staff</option>
                   </select>
                 </div>
                 <div>
