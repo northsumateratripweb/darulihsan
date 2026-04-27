@@ -18,11 +18,10 @@ export default function AdminLoginPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error("Email atau password salah.");
+      toast.error(error.message);
     } else {
       toast.success("Login berhasil!");
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     }
     setLoading(false);
   };

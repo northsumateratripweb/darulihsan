@@ -23,24 +23,38 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // Protect admin routes (except login)
+  // 1. Protect admin routes (except login)
   if (
     request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login') &&
-    !user
+    !request.nextUrl.pathname.startsWith('/admin/login')
   ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/login'
-    return NextResponse.redirect(url)
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/login'
+      // Re-create the redirect response and copy the refreshed cookies
+      const redirectResponse = NextResponse.redirect(url)
+      // Copy cookies from supabaseResponse to the redirect response
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+      })
+      return redirectResponse
+    }
   }
 
-  // Redirect logged in users away from login page
+  // 2. Redirect logged in users away from login page
   if (request.nextUrl.pathname === '/admin/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin'
-    return NextResponse.redirect(url)
+    const redirectResponse = NextResponse.redirect(url)
+    // Copy cookies from supabaseResponse to the redirect response
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   return supabaseResponse
