@@ -23,32 +23,61 @@ export default function AdminGaleriPage() {
   useEffect(() => { load(); }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     
     setUploading(true);
+    setSaving(true);
     const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `galeri/${fileName}`;
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `galeri/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('uploads')
-      .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(filePath, file);
 
-    if (uploadError) {
-      toast.error("Gagal upload: " + uploadError.message);
-    } else {
-      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
-      setForm((prev) => ({ ...prev, url: publicUrl }));
-      toast.success("Foto berhasil diunggah!");
+      if (uploadError) {
+        toast.error(`Gagal upload ${file.name}: ` + uploadError.message);
+      } else {
+        const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
+        
+        // Insert langsung ke database
+        const { error: dbError } = await supabase.from("galeri").insert([{
+          judul: form.judul || file.name,
+          url: publicUrl,
+          kategori: form.kategori
+        }]);
+        
+        if (!dbError) successCount++;
+      }
     }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} foto berhasil ditambahkan!`);
+      setShowModal(false);
+      setForm({ judul: "", url: "", kategori: "UMUM" });
+      load();
+    }
+    
     setUploading(false);
+    setSaving(false);
+    
+    // Reset file input
+    e.target.value = '';
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.url) return toast.error("URL gambar wajib diisi");
+    if (!form.url) {
+      // Jika URL kosong, berarti user harusnya menggunakan tombol upload gambar
+      return toast.error("Silakan pilih gambar dari perangkat Anda");
+    }
     setSaving(true);
     const supabase = createClient();
     const { error } = await supabase.from("galeri").insert([form]);
@@ -124,7 +153,7 @@ export default function AdminGaleriPage() {
                     className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     placeholder="https://..." required />
                   <label className="w-12 h-[46px] bg-slate-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-200 shrink-0">
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
                     <ImageIcon className={`w-5 h-5 text-slate-500 ${uploading ? 'animate-pulse' : ''}`} />
                   </label>
                 </div>

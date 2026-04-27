@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import { Save, Settings, Eye } from "lucide-react";
+import { Save, Settings, Eye, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 
 const defaultSettings: Record<string, string> = {
@@ -37,14 +37,14 @@ const settingGroups = [
   {
     label: "Hero Section",
     keys: ["hero_title", "hero_subtitle", "hero_image", "hero_cta_text"],
-    labels: ["Judul Hero", "Subtitle Hero", "URL Gambar Hero", "Teks Tombol CTA"],
-    types: ["text", "textarea", "text", "text"],
+    labels: ["Judul Hero", "Subtitle Hero", "Foto Hero Utama", "Teks Tombol CTA"],
+    types: ["text", "textarea", "image", "text"],
   },
   {
     label: "Profil & Pimpinan",
     keys: ["visi", "principal_name", "principal_photo", "principal_quote"],
-    labels: ["Visi Pesantren", "Nama Pimpinan", "Foto Pimpinan (URL)", "Kutipan Pimpinan"],
-    types: ["textarea", "text", "text", "textarea"],
+    labels: ["Visi Pesantren", "Nama Pimpinan", "Foto Pimpinan", "Kutipan Pimpinan"],
+    types: ["textarea", "text", "image", "textarea"],
   },
   {
     label: "Media Sosial",
@@ -64,6 +64,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -78,6 +79,30 @@ export default function AdminSettingsPage() {
     };
     load();
   }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingKey(key);
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `settings/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Gagal upload: " + uploadError.message);
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setSettings((prev) => ({ ...prev, [key]: publicUrl }));
+      toast.success("Foto berhasil diunggah!");
+    }
+    setUploadingKey(null);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -129,6 +154,19 @@ export default function AdminSettingsPage() {
                       rows={3}
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 resize-none text-sm"
                     />
+                  ) : group.types[i] === "image" ? (
+                    <div className="flex gap-2">
+                      <input
+                        value={settings[key] || ""}
+                        onChange={(e) => setSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm"
+                        placeholder="URL Gambar atau Upload ->"
+                      />
+                      <label className="w-12 h-[46px] bg-slate-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-200 shrink-0">
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, key)} disabled={uploadingKey === key} />
+                        <ImageIcon className={`w-5 h-5 text-slate-500 ${uploadingKey === key ? 'animate-pulse' : ''}`} />
+                      </label>
+                    </div>
                   ) : (
                     <input
                       value={settings[key] || ""}
